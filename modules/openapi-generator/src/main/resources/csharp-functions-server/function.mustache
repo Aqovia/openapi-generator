@@ -1,0 +1,40 @@
+using System;
+using System.Net;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.WebJobs;
+using Microsoft.Azure.WebJobs.Extensions.Http;
+
+namespace {{apiPackage}}
+{ {{#operations}}
+    public {{#classModifier}}{{classModifier}} {{/classModifier}}class {{classname}}
+    { {{#operation}}
+        /// <summary>
+        /// {{#summary}}{{summary}}{{/summary}}
+        /// </summary>{{#notes}}
+        /// <remarks>{{notes}}</remarks>{{/notes}}{{#allParams}}{{#isPathParam}}
+        /// {{>pathParamDescription}}{{/isPathParam}}{{#isBodyParam}}
+        /// {{>bodyParamDescription}}{{/isBodyParam}}{{#isQueryParam}}
+        /// {{>queryParamDescription}}{{/isQueryParam}}{{/allParams}}{{#responses}}
+        /// <response code="{{code}}"{{#dataType}} dataType="{{&dataType}}"{{/dataType}}>{{message}}</response>{{/responses}}
+        [FunctionName("{{classname}}_{{operationId}}")]
+        public {{#operationResultTask}}{{#operationIsAsync}}async {{/operationIsAsync}}Task<{{/operationResultTask}}IActionResult{{#operationResultTask}}>{{/operationResultTask}} {{#allowImplementationInSeparateMethod}}_{{/allowImplementationInSeparateMethod}}{{operationId}}{{#operationResultTask}}{{#operationIsAsync}}Async{{/operationIsAsync}}{{/operationResultTask}}([HttpTrigger(AuthorizationLevel.Anonymous, "{{httpMethod}}", Route = "{{{apiBasePath}}}{{{path}}}")]HttpRequest req, ExecutionContext context{{#allParams}}{{#isPathParam}}, {{>pathParam}}{{/isPathParam}}{{/allParams}})
+        {
+        {{^allowImplementationInSeparateMethod}}
+            return {{#operationResultTask}}{{^operationIsAsync}}Task.FromResult((IActionResult){{/operationIsAsync}}{{/operationResultTask}}new StatusCodeResult((int)HttpStatusCode.NotImplemented){{#operationResultTask}}{{^operationIsAsync}}){{/operationIsAsync}}{{/operationResultTask}};
+        {{/allowImplementationInSeparateMethod}}
+        {{#allowImplementationInSeparateMethod}}
+            var method = this.GetType().GetMethod("{{operationId}}{{#operationResultTask}}{{#operationIsAsync}}Async{{/operationIsAsync}}{{/operationResultTask}}");
+
+            return method != null{{#operationResultTask}}{{#operationIsAsync}}
+                ? (await ((Task<IActionResult>)method.Invoke(this, new object[] { req, context{{#allParams}}{{#isPathParam}}, {{>paramName}}{{/isPathParam}}{{/allParams}} })).ConfigureAwait(false)){{/operationIsAsync}}{{^operationIsAsync}}
+                ? (Task<IActionResult>)method.Invoke(this, new object[] { req, context{{#allParams}}{{#isPathParam}}, {{>paramName}}{{/isPathParam}}{{/allParams}} }){{/operationIsAsync}}{{/operationResultTask}}{{^operationResultTask}}
+                ? (IActionResult)method.Invoke(this, new object[] { req, context{{#allParams}}{{#isPathParam}}, {{>paramName}}{{/isPathParam}}{{/allParams}} }){{/operationResultTask}}
+                : {{#operationResultTask}}{{^operationIsAsync}}Task.FromResult((IActionResult){{/operationIsAsync}}{{/operationResultTask}}new StatusCodeResult((int)HttpStatusCode.NotImplemented){{#operationResultTask}}{{^operationIsAsync}}){{/operationIsAsync}}{{/operationResultTask}};
+        {{/allowImplementationInSeparateMethod}}
+        }
+        {{/operation}}
+    }
+{{/operations}}
+}

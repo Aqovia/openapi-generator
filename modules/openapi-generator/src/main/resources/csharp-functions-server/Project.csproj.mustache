@@ -1,10 +1,20 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netcoreapp{{aspnetCoreVersion}}</TargetFramework>
+  {{#isFunctionsV2}}
     <AzureFunctionsVersion>v2</AzureFunctionsVersion>
+  {{/isFunctionsV2}}
+  {{^isFunctionsV2}}
+    <AzureFunctionsVersion>v3</AzureFunctionsVersion>
+  {{/isFunctionsV2}}
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.NET.Sdk.Functions" Version="1.0.29" />
+  {{#isFunctionsV2}}
+    <PackageReference Include="Microsoft.NET.Sdk.Functions" Version="1.0.31" />
+  {{/isFunctionsV2}}
+  {{^isFunctionsV2}}
+    <PackageReference Include="Microsoft.NET.Sdk.Functions" Version="3.0.3" />
+  {{/isFunctionsV2}}  
   </ItemGroup>
   <ItemGroup>
     <None Update="host.json">

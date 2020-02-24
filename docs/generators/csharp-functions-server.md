@@ -5,21 +5,16 @@ sidebar_label: csharp-functions-server
 
 | Option | Description | Values | Default |
 | ------ | ----------- | ------ | ------- |
-|aspnetCoreVersion|ASP.NET Core version: 2.1| |2.1|
-|buildTarget|Target to build an application or library| |program|
-|classModifier|Class Modifier can be empty, abstract| ||
-|compatibilityVersion|ASP.Net Core CompatibilityVersion| |Version_2_2|
+|aspnetCoreVersion|ASP.NET Core version: 2.1, 2.2, 3.1| |3.1|
+|allowImplementationInSeparateMethod|Construct Function bodies that allow for an actual implementation to be provided in a separate method| |false|
+|classModifier|Class Modifier can be empty, partial| ||
 |enumNameSuffix|Suffix that will be appended to all enum names.| |Enum|
 |enumValueSuffix|Suffix that will be appended to all enum values.| |Enum|
-|generateBody|Generates method body.| |true|
-|isLibrary|Is the build a library| |false|
 |licenseName|The name of the license| |NoLicense|
 |licenseUrl|The URL of the license| |http://localhost|
 |modelClassModifier|Model Class Modifier can be nothing or partial| |partial|
-|newtonsoftVersion|Version for Microsoft.AspNetCore.Mvc.NewtonsoftJson for ASP.NET Core 3.0+| |3.0.0-preview5-19227-01|
-|operationIsAsync|Set methods to async or sync (default).| |false|
-|operationModifier|Operation Modifier can be virtual, abstract or partial| |virtual|
-|operationResultTask|Set methods result to Task&lt;&gt;.| |false|
+|operationIsAsync|Set methods to async (default) or sync.| |true|
+|operationResultTask|Set methods&#39; result to Task&lt;&gt;.| |true|
 |packageAuthors|Specifies Authors property in the .NET Core project file.| |OpenAPI|
 |packageCopyright|Specifies an AssemblyCopyright for the .NET Framework global assembly attributes stored in the AssemblyInfo file.| |No Copyright|
 |packageGuid|The GUID that will be associated with the C# project| |null|
@@ -31,8 +26,6 @@ sidebar_label: csharp-functions-server
 |sourceFolder|source folder for generated code| |src|
 |useCollection|Deserialize array types to Collection&lt;T&gt; instead of List&lt;T&gt;.| |false|
 |useDateTimeOffset|Use DateTimeOffset to model date-time properties| |false|
-|useFrameworkReference|Use frameworkReference for ASP.NET Core 3.0+ and  PackageReference  ASP.NET Core 2.2 or earlier.| |false|
-|useNewtonsoft|Uses the Newtonsoft JSON library.| |true|
 
 ## IMPORT MAPPING
 

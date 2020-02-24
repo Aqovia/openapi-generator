@@ -22,22 +22,12 @@ import static java.util.UUID.randomUUID;
 public class CsharpFunctionsServerCodegen extends AbstractCSharpCodegen {
 
     public static final String ASPNET_CORE_VERSION = "aspnetCoreVersion";
+    public static final String IS_FUNCTIONS_V2 = "isFunctionsV2";
+    public static final String ALLOW_IMPLEMENTATION_IN_SEPARATE_METHOD = "allowImplementationInSeparateMethod";
     public static final String CLASS_MODIFIER = "classModifier";
-    public static final String OPERATION_MODIFIER = "operationModifier";
     public static final String OPERATION_IS_ASYNC = "operationIsAsync";
     public static final String OPERATION_RESULT_TASK = "operationResultTask";
-    public static final String GENERATE_BODY = "generateBody";
-    public static final String BUILD_TARGET = "buildTarget";
     public static final String MODEL_CLASS_MODIFIER = "modelClassModifier";
-
-    public static final String PROJECT_SDK = "projectSdk";
-    public static final String SDK_WEB = "Microsoft.NET.Sdk.Web";
-    public static final String SDK_LIB = "Microsoft.NET.Sdk";
-    public static final String COMPATIBILITY_VERSION = "compatibilityVersion";
-    public static final String IS_LIBRARY = "isLibrary";
-    public static final String USE_FRAMEWORK_REFERENCE = "useFrameworkReference";
-    public static final String USE_NEWTONSOFT = "useNewtonsoft";
-    public static final String NEWTONSOFT_VERSION = "newtonsoftVersion";
 
     private String packageGuid = "{" + randomUUID().toString().toUpperCase(Locale.ROOT) + "}";
 
@@ -46,21 +36,14 @@ public class CsharpFunctionsServerCodegen extends AbstractCSharpCodegen {
 
     protected int serverPort = 8080;
     protected String serverHost = "0.0.0.0";
-    ; // default to 2.1
-    protected CliOption aspnetCoreVersion = new CliOption(ASPNET_CORE_VERSION, "2.1");
-    private CliOption classModifier = new CliOption(CLASS_MODIFIER, "Class Modifier can be empty, abstract");
-    private CliOption operationModifier = new CliOption(OPERATION_MODIFIER, "Operation Modifier can be virtual, abstract or partial");
-    private CliOption modelClassModifier = new CliOption(MODEL_CLASS_MODIFIER, "Model Class Modifier can be nothing or partial");
-    private boolean generateBody = true;
-    private CliOption buildTarget = new CliOption("buildTarget", "Target to build an application or library");
-    private String projectSdk = SDK_WEB;
-    private String compatibilityVersion = "Version_2_2";
-    private boolean operationIsAsync = false;
-    private boolean operationResultTask = false;
-    private boolean isLibrary = false;
-    private boolean useFrameworkReference = false;
-    private boolean useNewtonsoft = true;
-    private String newtonsoftVersion = "3.0.0-preview5-19227-01";
+    ; // default to 3.1
+    protected CliOption aspnetCoreVersion = new CliOption(ASPNET_CORE_VERSION, "3.1, 2.2, 2.1");
+    protected boolean isFunctionsV2 = false;
+    private boolean allowImplementationInSeparateMethod = false;
+    private CliOption classModifier = new CliOption(CLASS_MODIFIER, "Class Modifier can be empty or partial");
+    private CliOption modelClassModifier = new CliOption(MODEL_CLASS_MODIFIER, "Model Class Modifier can be empty or partial");
+    private boolean operationIsAsync = true;
+    private boolean operationResultTask = true;
 
     public CsharpFunctionsServerCodegen() {
         super();
@@ -70,7 +53,7 @@ public class CsharpFunctionsServerCodegen extends AbstractCSharpCodegen {
         modelTemplateFiles.put("model.mustache", ".cs");
         apiTemplateFiles.put("function.mustache", ".cs");
 
-        embeddedTemplateDir = templateDir = "csharp-functions-server/2.1";
+        embeddedTemplateDir = templateDir = "csharp-functions-server";
 
         // contextually reserved words
         // NOTE: C# uses camel cased reserved words, while models are title cased. We don't want lowercase comparisons.
@@ -130,10 +113,10 @@ public class CsharpFunctionsServerCodegen extends AbstractCSharpCodegen {
                 CodegenConstants.SOURCE_FOLDER_DESC,
                 sourceFolder);
 
-        addOption(COMPATIBILITY_VERSION, "ASP.Net Core CompatibilityVersion", compatibilityVersion);
-
         aspnetCoreVersion.addEnum("2.1", "ASP.NET Core 2.1");
-        aspnetCoreVersion.setDefault("2.1");
+        aspnetCoreVersion.addEnum("2.2", "ASP.NET Core 2.2");
+        aspnetCoreVersion.addEnum("3.1", "ASP.NET Core 3.1");
+        aspnetCoreVersion.setDefault("3.1");
         aspnetCoreVersion.setOptValue(aspnetCoreVersion.getDefault());
         addOption(aspnetCoreVersion.getOpt(), aspnetCoreVersion.getDescription(), aspnetCoreVersion.getOptValue());
 
@@ -154,51 +137,31 @@ public class CsharpFunctionsServerCodegen extends AbstractCSharpCodegen {
                 CodegenConstants.RETURN_ICOLLECTION_DESC,
                 returnICollection);
 
-        addSwitch(IS_LIBRARY,
-                "Is the build a library",
-                isLibrary);
+        addOption(CodegenConstants.ENUM_NAME_SUFFIX,
+                CodegenConstants.ENUM_NAME_SUFFIX_DESC,
+                enumNameSuffix);
 
-        addSwitch(USE_FRAMEWORK_REFERENCE,
-                "Use frameworkReference for ASP.NET Core 3.0+ and  PackageReference  ASP.NET Core 2.2 or earlier.",
-                useFrameworkReference);
-
-        addSwitch(USE_NEWTONSOFT,
-                "Uses the Newtonsoft JSON library.",
-                useNewtonsoft);
-
-        addOption(NEWTONSOFT_VERSION,
-                "Version for Microsoft.AspNetCore.Mvc.NewtonsoftJson for ASP.NET Core 3.0+",
-                newtonsoftVersion);
+        addOption(CodegenConstants.ENUM_VALUE_SUFFIX,
+                "Suffix that will be appended to all enum values.",
+                enumValueSuffix);
 
         classModifier.addEnum("", "Keep class default with no modifier");
-        classModifier.addEnum("abstract", "Make class abstract");
+        classModifier.addEnum("partial", "Make class partial");
         classModifier.setDefault("");
         classModifier.setOptValue(classModifier.getDefault());
         addOption(classModifier.getOpt(), classModifier.getDescription(), classModifier.getOptValue());
 
-        operationModifier.addEnum("virtual", "Keep method virtual");
-        operationModifier.addEnum("abstract", "Make method abstract");
-        operationModifier.setDefault("virtual");
-        operationModifier.setOptValue(operationModifier.getDefault());
-        addOption(operationModifier.getOpt(), operationModifier.getDescription(), operationModifier.getOptValue());
-
-        buildTarget.addEnum("program", "Generate code for a standalone server");
-        buildTarget.addEnum("library", "Generate code for a server abstract class library");
-        buildTarget.setDefault("program");
-        buildTarget.setOptValue(buildTarget.getDefault());
-        addOption(buildTarget.getOpt(), buildTarget.getDescription(), buildTarget.getOptValue());
-
-        addSwitch(GENERATE_BODY,
-                "Generates method body.",
-                generateBody);
-
         addSwitch(OPERATION_IS_ASYNC,
-                "Set methods to async or sync (default).",
+                "Set methods to async (default) or sync.",
                 operationIsAsync);
 
         addSwitch(OPERATION_RESULT_TASK,
-                "Set methods result to Task<>.",
+                "Set methods' result to Task<>.",
                 operationResultTask);
+
+        addSwitch(ALLOW_IMPLEMENTATION_IN_SEPARATE_METHOD,
+                "Construct Function bodies that allow for an actual implementation to be provided in a separate method",
+                allowImplementationInSeparateMethod);
 
         modelClassModifier.setType("String");
         modelClassModifier.addEnum("", "Keep model class default with no modifier");
@@ -242,22 +205,13 @@ public class CsharpFunctionsServerCodegen extends AbstractCSharpCodegen {
         }
         additionalProperties.put("packageGuid", packageGuid);
 
-        if (!additionalProperties.containsKey(NEWTONSOFT_VERSION)) {
-            additionalProperties.put(NEWTONSOFT_VERSION, newtonsoftVersion);
-        } else {
-            newtonsoftVersion = (String)additionalProperties.get(NEWTONSOFT_VERSION);
-        }
-
         // Check for the modifiers etc.
         // The order of the checks is important.
-        setBuildTarget();
         setClassModifier();
-        setOperationModifier();
         setModelClassModifier();
+        setOperationResultTask();
         setOperationIsAsync();
-
-        // CHeck for class modifier if not present set the default value.
-        additionalProperties.put(PROJECT_SDK, projectSdk);
+        setAllowImplementationInSeparateMethod();
 
         additionalProperties.put("dockerTag", packageName.toLowerCase(Locale.ROOT));
 
@@ -275,8 +229,6 @@ public class CsharpFunctionsServerCodegen extends AbstractCSharpCodegen {
 
         // determine the ASP.NET core version setting
         setAspnetCoreVersion(packageFolder);
-        setIsFramework();
-        setUseNewtonsoft();
 
         supportingFiles.add(new SupportingFile("gitignore", packageFolder, ".gitignore"));
         supportingFiles.add(new SupportingFile("Project.csproj.mustache", packageFolder, packageName + ".csproj"));
@@ -369,100 +321,49 @@ public class CsharpFunctionsServerCodegen extends AbstractCSharpCodegen {
     }
 
     private void setClassModifier() {
-        // CHeck for class modifier if not present set the default value.
+        // Check for class modifier if not present set the default value.
         setCliOption(classModifier);
-
-        // If class modifier is abstract then the methods need to be abstract too.
-        if ("abstract".equals(classModifier.getOptValue())) {
-            operationModifier.setOptValue(classModifier.getOptValue());
-            additionalProperties.put(OPERATION_MODIFIER, operationModifier.getOptValue());
-            LOGGER.warn("classModifier is " + classModifier.getOptValue() + " so forcing operationModifier to " + operationModifier.getOptValue());
-        }
-    }
-
-    private void setOperationModifier() {
-        setCliOption(operationModifier);
-
-        // If operation modifier is abstract then dont generate any body
-        if ("abstract".equals(operationModifier.getOptValue())) {
-            generateBody = false;
-            additionalProperties.put(GENERATE_BODY, generateBody);
-            LOGGER.warn("operationModifier is " + operationModifier.getOptValue() + " so forcing generateBody to " + generateBody);
-        } else if (additionalProperties.containsKey(GENERATE_BODY)) {
-            generateBody = convertPropertyToBooleanAndWriteBack(GENERATE_BODY);
-        } else {
-            additionalProperties.put(GENERATE_BODY, generateBody);
-        }
     }
 
     private void setModelClassModifier() {
         setCliOption(modelClassModifier);
-
-        // If operation modifier is abstract then dont generate any body
-        if (isLibrary) {
-            modelClassModifier.setOptValue("");
-            additionalProperties.put(MODEL_CLASS_MODIFIER, modelClassModifier.getOptValue());
-            LOGGER.warn("buildTarget is " + buildTarget.getOptValue() + " so removing any modelClassModifier ");
-        }
     }
-
-    private void setBuildTarget() {
-        setCliOption(buildTarget);
-        if ("library".equals(buildTarget.getOptValue())) {
-            isLibrary = true;
-            projectSdk = SDK_LIB;
-            additionalProperties.put(CLASS_MODIFIER, "abstract");
-        } else {
-            isLibrary = false;
-            projectSdk = SDK_WEB;
-        }
-        additionalProperties.put(IS_LIBRARY, isLibrary);
-    }
-
+    
     private void setAspnetCoreVersion(String packageFolder) {
         setCliOption(aspnetCoreVersion);
-        LOGGER.info("ASP.NET core version: " + aspnetCoreVersion.getOptValue());
-        compatibilityVersion = "Version_" + aspnetCoreVersion.getOptValue().replace(".", "_");
-        additionalProperties.put(COMPATIBILITY_VERSION, compatibilityVersion);
-    }
 
+        isFunctionsV2 = aspnetCoreVersion.getOptValue().startsWith("2.");
+        additionalProperties.put(IS_FUNCTIONS_V2, isFunctionsV2);
+        
+        LOGGER.info("ASP.NET core version: " + aspnetCoreVersion.getOptValue());
+    }
+    
+    private void setOperationResultTask() {
+        if (additionalProperties.containsKey(OPERATION_RESULT_TASK)) {
+            operationResultTask = convertPropertyToBooleanAndWriteBack(OPERATION_RESULT_TASK);
+        } else {
+            additionalProperties.put(OPERATION_RESULT_TASK, operationResultTask);
+        }
+    }
+    
     private void setOperationIsAsync() {
-        if (isLibrary) {
-            operationIsAsync = false;
-            additionalProperties.put(OPERATION_IS_ASYNC, operationIsAsync);
-        } else if (additionalProperties.containsKey(OPERATION_IS_ASYNC)) {
+        if (additionalProperties.containsKey(OPERATION_IS_ASYNC)) {
             operationIsAsync = convertPropertyToBooleanAndWriteBack(OPERATION_IS_ASYNC);
         } else {
             additionalProperties.put(OPERATION_IS_ASYNC, operationIsAsync);
         }
     }
 
-    private void setIsFramework() {
-        if (aspnetCoreVersion.getOptValue().startsWith("3.")) {// default, do nothing
-            LOGGER.warn("ASP.NET core version is " + aspnetCoreVersion.getOptValue() + " so changing  to use frameworkReference instead of packageReference ");
-            useFrameworkReference = true;
-            additionalProperties.put(USE_FRAMEWORK_REFERENCE, useFrameworkReference);
+    private void setAllowImplementationInSeparateMethod() {
+        if (additionalProperties.containsKey(ALLOW_IMPLEMENTATION_IN_SEPARATE_METHOD)) {
+            allowImplementationInSeparateMethod = convertPropertyToBooleanAndWriteBack(ALLOW_IMPLEMENTATION_IN_SEPARATE_METHOD);
         } else {
-            if (additionalProperties.containsKey(USE_FRAMEWORK_REFERENCE)) {
-                useFrameworkReference = convertPropertyToBooleanAndWriteBack(USE_FRAMEWORK_REFERENCE);
-            } else {
-                additionalProperties.put(USE_FRAMEWORK_REFERENCE, useFrameworkReference);
-            }
+            additionalProperties.put(ALLOW_IMPLEMENTATION_IN_SEPARATE_METHOD, allowImplementationInSeparateMethod);
         }
-    }
-
-    private void setUseNewtonsoft() {
-        if (aspnetCoreVersion.getOptValue().startsWith("2.")) {
-            LOGGER.warn("ASP.NET core version is " + aspnetCoreVersion.getOptValue() + " so staying on default json library.");
-            useNewtonsoft = false;
-            additionalProperties.put(USE_NEWTONSOFT, useNewtonsoft);
-        } else {
-            if (additionalProperties.containsKey(USE_NEWTONSOFT)) {
-                useNewtonsoft = convertPropertyToBooleanAndWriteBack(USE_NEWTONSOFT);
-            } else {
-                additionalProperties.put(USE_NEWTONSOFT, useNewtonsoft);
-            }
-        }
+        
+        // force partial class if true
+        if (allowImplementationInSeparateMethod)
+            additionalProperties.put(CLASS_MODIFIER, "partial");
     }
 
     private void setApiBasePath() {
